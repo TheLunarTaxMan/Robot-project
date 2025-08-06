@@ -13,9 +13,9 @@ def set_state(state):
     if state == "forward":
         set_motors(0.2,0.2)
     elif state == "left":
-        set_motors(0.2,turnAngle)
+        set_motors(0.2,0.3)
     elif state == "right":
-        set_motors(turnAngle, 0.2)
+        set_motors(0.3, 0.2)
 
 #calculates marker distances
 def markerLocater(markerList):
@@ -30,12 +30,16 @@ def markerLocater(markerList):
 def markerchasing(marker):
     print("markerchasing")
         #Finds smallest value in List
-        if marker.position.distance >= 300 and markerTargeted.position.distance <= 3000:
-            turnAngle = markerTargeted.position.horizontal_angle
-            
-        else:
-            turnAngle = 0.3 
-        return True       
+    if marker.position.distance >= 300 and marker.position.distance <= 3000:
+            turnAngle = marker.position.horizontal_angle
+            if turnAngle > 0.2:
+                set_state("right")
+            elif turnAngle < -0.2:
+                set_state("left")
+            else:
+                set_state("forward")
+    else:
+         turnAngle = 0.3 
 
 def linefollowing():
     print("line following")
@@ -53,7 +57,7 @@ def linefollowing():
 def whereami(): #finds the higest value id to go towards
     markerList = vision.detect_markers()
     if len(markerList) > 0:
-        ID = markerList[0] 
+        ID = markerLocater(markerList) 
         check = None
         for marker in markerList:
             if (marker.id == 6 or marker.id == 7) and marker.postion.distance < 2200:
@@ -66,23 +70,28 @@ def whereami(): #finds the higest value id to go towards
                     ID = marker
         if check != None and (ID.id == 7 or ID.id == 6): #checks if 1 or 0 are seen in the edge case the robot sees them and 6
             return check
-        return Id
+        if (marker.id == 6 or marker.id == 7) and marker.postion.distance < 2200:
+                linefollowing()
+        return ID
     else:
         return None
 
 
-def panick()
+def panick():
+    sound_buzzer(528,1)
     print("PANICKING!!!")
     #checks what current location is
     leftDistance = arduino.measure_ultrasound_distance(11, 10)
     rightDistance = arduino.measure_ultrasound_distance(13, 12)
     if rightDistance < 50 and leftDistance < 50:
-        #reverse 
+        print("reverse")
     elif rightDistance < 50:
+         print("turnleft")
         #reverse turning left
     elif leftDistance < 50:
-        #revers turing right
+        print("turn right")
     else:
+        print("360")
         #do a 360 (4 seperate 90 deg turns) and follow highest value target
         
 
@@ -106,15 +115,15 @@ while True:
         if location.id == 0 or location.id == 1:
             if arduino.analog_read(AnalogPin.A3) > 200 or arduino.analog_read(AnalogPin.A4) > 200 or arduino.analog_read(AnalogPin.A5) > 200:
                 #stop and rotate 90 left 
-            markerchasing(location)
+              markerchasing(location)
         elif location.id == 2 or location.id == 3 or location.id == 4 or location.id == 5:
             linefollowing()    #we need a check for if we actually know where the line is
         elif location.id == 6 or location.id == 7:
             if location.position.distance > 500:
                 markerchasing()
             else:
+                print("rotate")
                 #rotate about 90 degs left (doesnt need to be precise)
     else:
         panick()
  
-    set_state(current_state)
