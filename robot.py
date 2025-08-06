@@ -54,36 +54,53 @@ def linefollowing():
     if left_IR < 3.5 and centre_IR > 1.2 and right_IR < 1.2:
         current_state = "right"
 
-def whereami():
-    return 1
+def whereami(): #finds the higest value id to go towards
+    markerList = vision.detect_markers()
+    if len(markerList) > 0:
+        ID = markerList[0] 
+        check = None
+        for marker in markerList:
+            if marker.id == 0 or marker.id == 1:
+                check = marker.id
+            val = marker.id
+            if val > ID.id:
+                ID = marker
+        if check != None and (ID.id == 7 or ID.id == 6): #checks if 1 or 0 are seenin the edge case the robot sees them and 6
+            return check
+        return Id
+    else:
+        return None
 
+
+def panick()
+    #checks what current location is
+
+
+#main starts here
 arduino.set_pin_mode(AnalogPin.A5, GPIOPinMode.Input)
 arduino.set_pin_mode(AnalogPin.A4, GPIOPinMode.Input)
 arduino.set_pin_mode(AnalogPin.A3, GPIOPinMode.Input)
-
 arduino.set_pin_mode(10, GPIOPinMode.Input)
 arduino.set_pin_mode(11, GPIOPinMode.Input)
 arduino.set_pin_mode(12, GPIOPinMode.Input)
 arduino.set_pin_mode(13, GPIOPinMode.Input)
 
 
-chasing = False
-
 while True:
     UltraDistance = arduino.measure_ultrasound_distance(11,10)
     #Stores current QRCodes in List
     location = whereami()
-    if location == 1 or location == 2:
-        chasing = True
-    elif location == 3 or location == 4:
-        chasing = False
+    if location != None:
+        if location.id == 0 or location.id == 1:
+            markerchasing()
+        elif location.id == 2 or location.id == 3 or location.id == 4 or location.id == 5:
+            linefollowing()    
+        elif location.id == 6 or location.id == 7:
+            if location.location.distance > 500:
+                markerchasing()
+            else:
+                #rotate about 90 degs left (doesnt need to be precise)
     else:
-        chasing = False
-    
-    
-
-    if chasing:
-        markerchasing()
-    else:
-        linefollowing()    
+        panick()
+ 
     set_state(current_state)
