@@ -28,6 +28,7 @@ def markerLocater(markerList):
 
 
 def markerchasing():
+    print("markerchasing")
     markerList = vision.detect_markers()
     if len(markerList) > 0:
         markerTargeted = markerLocater(markerList)
@@ -43,6 +44,7 @@ def markerchasing():
         return False
 
 def linefollowing():
+    print("line following")
     left_IR = arduino.analog_read(AnalogPin.A3)
     centre_IR = arduino.analog_read(AnalogPin.A4)
     right_IR = arduino.analog_read(AnalogPin.A5)
@@ -65,7 +67,7 @@ def whereami(): #finds the higest value id to go towards
             val = marker.id
             if val > ID.id:
                 ID = marker
-        if check != None and (ID.id == 7 or ID.id == 6): #checks if 1 or 0 are seenin the edge case the robot sees them and 6
+        if check != None and (ID.id == 7 or ID.id == 6): #checks if 1 or 0 are seen in the edge case the robot sees them and 6
             return check
         return Id
     else:
@@ -73,7 +75,19 @@ def whereami(): #finds the higest value id to go towards
 
 
 def panick()
+    print("PANICKING!!!")
     #checks what current location is
+    leftDistance = arduino.measure_ultrasound_distance(11, 10)
+    rightDistance = arduino.measure_ultrasound_distance(13, 12)
+    if rightDistance < 50 and leftDistance < 50:
+        #reverse 
+    elif rightDistance < 50:
+        #reverse turning left
+    elif leftDistance < 50:
+        #revers turing right
+    else:
+        #do a 360 (4 seperate 90 deg turns) and follow highest value target
+        
 
 
 #main starts here
@@ -81,20 +95,23 @@ arduino.set_pin_mode(AnalogPin.A5, GPIOPinMode.Input)
 arduino.set_pin_mode(AnalogPin.A4, GPIOPinMode.Input)
 arduino.set_pin_mode(AnalogPin.A3, GPIOPinMode.Input)
 arduino.set_pin_mode(10, GPIOPinMode.Input)
-arduino.set_pin_mode(11, GPIOPinMode.Input)
+arduino.set_pin_mode(11, GPIOPinMode.Output)
 arduino.set_pin_mode(12, GPIOPinMode.Input)
-arduino.set_pin_mode(13, GPIOPinMode.Input)
+arduino.set_pin_mode(13, GPIOPinMode.Output)
 
 
 while True:
     UltraDistance = arduino.measure_ultrasound_distance(11,10)
     #Stores current QRCodes in List
     location = whereami()
+    print("i am following ID " + str(location.id))
     if location != None:
         if location.id == 0 or location.id == 1:
+            if arduino.analog_read(AnalogPin.A3) > 200 or arduino.analog_read(AnalogPin.A4) > 200 or arduino.analog_read(AnalogPin.A5) > 200:
+                #stop and rotate 90 left 
             markerchasing()
         elif location.id == 2 or location.id == 3 or location.id == 4 or location.id == 5:
-            linefollowing()    
+            linefollowing()    #we need a check for if we actually know where the line is
         elif location.id == 6 or location.id == 7:
             if location.location.distance > 500:
                 markerchasing()
