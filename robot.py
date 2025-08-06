@@ -27,21 +27,15 @@ def markerLocater(markerList):
     return closest
 
 
-def markerchasing():
+def markerchasing(marker):
     print("markerchasing")
-    markerList = vision.detect_markers()
-    if len(markerList) > 0:
-        markerTargeted = markerLocater(markerList)
         #Finds smallest value in List
-        if markerTargeted.location.distance >= 300 and markerTargeted.location.distance <= 3000:
-            #Find of a way to identify which marker corresponds to the shortest distance
+        if marker.position.distance >= 300 and markerTargeted.position.distance <= 3000:
             turnAngle = markerTargeted.position.horizontal_angle
+            
         else:
             turnAngle = 0.3 
         return True       
-    else:
-        print("nomarkers")
-        return False
 
 def linefollowing():
     print("line following")
@@ -62,11 +56,14 @@ def whereami(): #finds the higest value id to go towards
         ID = markerList[0] 
         check = None
         for marker in markerList:
-            if marker.id == 0 or marker.id == 1:
-                check = marker.id
-            val = marker.id
-            if val > ID.id:
-                ID = marker
+            if (marker.id == 6 or marker.id == 7) and marker.postion.distance < 2200:
+                print("saw em")
+            else:
+                if marker.id == 0 or marker.id == 1:
+                    check = marker.id    
+                val = marker.id
+                if val > ID.id:
+                    ID = marker
         if check != None and (ID.id == 7 or ID.id == 6): #checks if 1 or 0 are seen in the edge case the robot sees them and 6
             return check
         return Id
@@ -109,11 +106,11 @@ while True:
         if location.id == 0 or location.id == 1:
             if arduino.analog_read(AnalogPin.A3) > 200 or arduino.analog_read(AnalogPin.A4) > 200 or arduino.analog_read(AnalogPin.A5) > 200:
                 #stop and rotate 90 left 
-            markerchasing()
+            markerchasing(location)
         elif location.id == 2 or location.id == 3 or location.id == 4 or location.id == 5:
             linefollowing()    #we need a check for if we actually know where the line is
         elif location.id == 6 or location.id == 7:
-            if location.location.distance > 500:
+            if location.position.distance > 500:
                 markerchasing()
             else:
                 #rotate about 90 degs left (doesnt need to be precise)
