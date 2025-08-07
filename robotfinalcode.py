@@ -41,13 +41,18 @@ def markerSpeed(state, turnSpeed, forwardSpeed):
     
 
 def markerchasing(marker):
+    previousTarget = marker
+    if marker.posistion. angle > 0:
+        wasLeft = False
+    else:
+        wasLeft = True
     forwardSpeed = 0.1
     turnSpeed = 0.15
     print("markerchasing")
     current_state = ""
     turnAngle = marker.position.horizontal_angle
     if turnAngle == turnAngletemp:
-        current_state "left"
+        current_state = "left"`
         turnSpeed = -1 * turnSpeed
         forwardSpeed = 0.2 * turnSpeed
     elif turnAngle < 0.2:
@@ -71,6 +76,7 @@ def markerchasing(marker):
     set_state(current_state, turnSpeed, forwardSpeed)
 
 def linefollowing():
+    previousTarget = None
     forwardSpeed = 0.1
     turnSpeed = 0.15
     current_state = ""
@@ -120,6 +126,11 @@ def whereami(): #finds the higest value id to go towards
 
 
 def panick():
+    if previousTarget != None:
+        if wasLeft:
+             set_state("left", 0.1, -0.1)
+        else:
+             set_state("right", 0.1, -0.1)
     if track67 == True:
         set_state("left", 0.1, -0.1)
         location = whereami()
@@ -128,7 +139,7 @@ def panick():
         elif location.id == 6 or location.id == 7:
             print("ULTRASOUNDLOCK")
             set_state("stop", 0, 0)
-            utils.sleep(2)
+            utils.sleep(0.2)
     else:
         frontDistance = arduino.measure_ultrasound_distance(2, 3)
         if frontDistance == 0:
@@ -162,6 +173,8 @@ arduino.set_pin_mode(2, GPIOPinMode.OUTPUT)
 arduino.set_pin_mode(12, GPIOPinMode.INPUT)
 arduino.set_pin_mode(13, GPIOPinMode.OUTPUT)
 
+previousTarget = None
+wasLeft = False
 
 while True:
     UltraDistance = arduino.measure_ultrasound_distance(2,3)
@@ -170,7 +183,7 @@ while True:
     if track67 == False:
         if location != None:
             if location.id == 0 or location.id == 1:
-                # markerchasing()
+                markerchasing()
                 print("YAY 1")
             elif location.id == 2 or location.id == 3 or location.id == 4 or location.id == 5:
                 if location.id == 2 or location.id == 3 or ((location.id == 4 or location.id == 5) and location.position.distance > 1800):
@@ -187,8 +200,7 @@ while True:
                 if location.position.distance < 4220:
                     # markerchasing()
                     print("YAY 2")
-                else:
-                    print("rotationneeded")
+
                     #rotate about 90 degs left (doesnt need to be precise)
         else:
             panick()
