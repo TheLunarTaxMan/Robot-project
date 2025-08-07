@@ -3,19 +3,18 @@ import math
 
 
 listOfMarkerDistances = []
-# robot = Robot()
 
 def set_motors(left, right):
     motors.set_power(0, left)
     motors.set_power(1, right)
     
-def set_state(state):
+def set_state(state, turnSpeed, forwardSpeed):
     if state == "forward":
         set_motors(0.2,0.2)
     elif state == "left":
-        set_motors(0.2,0.3)
+        set_motors(forwardSpeed,turnSpeed)
     elif state == "right":
-        set_motors(0.3, 0.2)
+        set_motors(turnSpeed, forwardSpeed)
 
 #calculates marker distances
 def markerLocater(markerList):
@@ -26,23 +25,43 @@ def markerLocater(markerList):
             closest = marker
     return closest
 
+def markerSpeed(state, turnSpeed, forwardSpeed):
+    if state == "forward":
+        set_motors(forwardSpeed,forwardSpeed)
+    elif state == "left":
+        set_motors(forwardSpeed,turnSpeed)
+    elif state == "right":
+        set_motors(turnSpeed, forwardSpeed)
+    
 
 def markerchasing(marker):
+    forwardSpeed = 0.1
+    turnSpeed = 0.15
     print("markerchasing")
-        #Finds smallest value in List
+    current_state = ""
     if marker.position.distance >= 300 and marker.position.distance <= 3000:
             turnAngle = marker.position.horizontal_angle
             if turnAngle > 0.2:
-                set_state("right")
+                current_state = "right"
             elif turnAngle < -0.2:
-                set_state("left")
+                current_state = "left"
             else:
-                set_state("forward")
-    else:
-         turnAngle = 0.3 
+                current_state = "forward"
+                forwardspeed = forwardspeed * 3
+            if turnAngle > abs(0.6):
+                print("drifty boyo")
+                turnSpeed = turnSpeed * 1.2
+                forwardSpeed = turnSpeed * -1
+            elif turnAngle < abs(0.1):
+                print("speedy boyo")
+                forwardSpeed = turnSpeed * 2
+            set_state(current_state, turnSpeed, forwardSpeed)
+
 
 def linefollowing():
-    print("line following")
+    forwardSpeed = 0.1
+    turnSpeed = 0.15
+    current_state = ""
     left_IR = arduino.analog_read(AnalogPin.A3)
     centre_IR = arduino.analog_read(AnalogPin.A4)
     right_IR = arduino.analog_read(AnalogPin.A5)
@@ -53,6 +72,13 @@ def linefollowing():
         current_state = "left"
     if left_IR < 3.5 and centre_IR > 1.2 and right_IR < 1.2:
         current_state = "right"
+    if left_IR < 3.5 and centre_IR < 3.5 and right_IR < 3.5:
+        print("tokyo drift")
+        turnSpeed = turnSpeed * 1.2
+        forwardSpeed = turnSpeed * -1
+        set_state(current_state, turnSpeed, forwardSpeed)
+        
+    set_state(current_state, turnSpeed, forwardSpeed)
 
 def whereami(): #finds the higest value id to go towards
     markerList = vision.detect_markers()
@@ -78,20 +104,23 @@ def whereami(): #finds the higest value id to go towards
 
 
 def panick():
-    sound_buzzer(528,1)
+    #sound_buzzer(528,1)
     print("PANICKING!!!")
     #checks what current location is
     leftDistance = arduino.measure_ultrasound_distance(11, 10)
     rightDistance = arduino.measure_ultrasound_distance(13, 12)
     if rightDistance < 50 and leftDistance < 50:
         print("reverse")
+        set_motors(-0.3,-0.3)
     elif rightDistance < 50:
          print("turnleft")
+         set_motors(-0.3,-0.2)
         #reverse turning left
     elif leftDistance < 50:
         print("turn right")
+        set_motors(-0.3,-0.2)
     else:
-        print("360")
+        print("do a barrel roll")
         #do a 360 (4 seperate 90 deg turns) and follow highest value target
         
 
@@ -124,6 +153,7 @@ while True:
             else:
                 print("rotate")
                 #rotate about 90 degs left (doesnt need to be precise)
+                
     else:
         panick()
  
